@@ -1,98 +1,99 @@
-package motorola;
+package motorola_6809;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
 public class ROM extends JFrame {
 
-	private static final long serialVersionUID = 1L;
-	private JPanel contentPane;
-	static DefaultTableModel model = new DefaultTableModel();
+    private static final long serialVersionUID = 1L;
+    private JPanel panneauPrincipal;
+    static DefaultTableModel modeleTableau = new DefaultTableModel();
 
-	public ROM() {
-		setTitle("ROM");
-		setAlwaysOnTop(true);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setBounds(750, 120, 212, 276);
-		contentPane = new JPanel();
-		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-        contentPane.setBackground(Color.PINK );
-		setContentPane(contentPane);
-		contentPane.setLayout(new BorderLayout(0, 0));
-		
-		JPanel panel = new JPanel();
-		contentPane.add(panel);
-		panel.setLayout(null);
-		panel.setLayout(new BorderLayout(0, 0));
-		
-		
+    public ROM() {
+        // Configuration de la fenêtre ROM
+        setTitle("ROM");
+        setAlwaysOnTop(true);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Fermer la ROM ne ferme pas l'application
+        setBounds(750, 120, 212, 276);
 
-		model.addColumn("Address");
-        model.addColumn("Donner ");
-        
-        JTable table = new JTable(model);
-        JScrollPane scrollPane = new JScrollPane(table);
-        panel.add(scrollPane);
-          // Remplir la ROM avec les adresses et valeurs par défaut
-    	for (int i = 0xFC00; i <= 0xFFFF; i++) {
-                String address = decimalEnHex(i); // Convert decimal to hexadecimal
-                model.addRow(new Object[]{address, "FF"});
-            }
-	}
-	//Sert à changer la valeur dans la colonne "Donner" du tableau
-    
-	static void modifierValeurColonne(int rowIndex, String value) {
-        int taille = value.length();
-        if (taille == 2) {
-        	if (rowIndex >= 0 && rowIndex < model.getRowCount()) {
-                model.setValueAt(value, rowIndex, 1); // Column 1 is index 1
-            } else {
-                System.out.println("Invalid row index");
-            }
+        // Création du panneau principal
+        panneauPrincipal = new JPanel();
+        panneauPrincipal.setBorder(new EmptyBorder(5, 5, 5, 5));
+        panneauPrincipal.setBackground(Color.PINK);
+        setContentPane(panneauPrincipal);
+        panneauPrincipal.setLayout(new BorderLayout(0, 0));
+
+        // Création du tableau ROM
+        modeleTableau.addColumn("Adresse");
+        modeleTableau.addColumn("Valeur");
+
+        JTable tableROM = new JTable(modeleTableau);
+        JScrollPane scrollPane = new JScrollPane(tableROM);
+        panneauPrincipal.add(scrollPane, BorderLayout.CENTER);
+
+        // Remplir la ROM avec les adresses par défaut et valeur FF
+        for (int i = 0xFC00; i <= 0xFFFF; i++) {
+            String adresse = decimalEnHex(i);
+            modeleTableau.addRow(new Object[]{adresse, "FF"});
         }
-        else {
-        	if (rowIndex >= 0 && rowIndex < model.getRowCount()) {
-        		String value1 = value.substring(0, 2);
-        		String value2 = value.substring(2);
-        		model.setValueAt(value1, rowIndex, 1);
-        		rowIndex++;
-        		model.setValueAt(value2, rowIndex, 1); // Column 1 is index 1
+    }
+
+    /**
+     * Modifier la valeur dans la colonne "Valeur" du tableau
+     */
+    public static void modifierValeurColonne(int indexLigne, String valeur) {
+        if (valeur.length() == 2) {
+            // Si valeur = 2 caractères
+            if (indexLigne >= 0 && indexLigne < modeleTableau.getRowCount()) {
+                modeleTableau.setValueAt(valeur, indexLigne, 1);
             } else {
-                System.out.println("Invalid row index");
+                System.out.println("Index de ligne invalide");
+            }
+        } else if (valeur.length() > 2) {
+            // Si valeur = 4 caractères (ex : 1234)
+            if (indexLigne >= 0 && indexLigne < modeleTableau.getRowCount()) {
+                modeleTableau.setValueAt(valeur.substring(0, 2), indexLigne, 1);
+                indexLigne++;
+                modeleTableau.setValueAt(valeur.substring(2), indexLigne, 1);
+            } else {
+                System.out.println("Index de ligne invalide");
             }
         }
     }
-	
-	private static String decimalEnHex(int value) {
-        // Convert to hexadecimal
-        String hexValue = Integer.toHexString(value).toUpperCase();
 
-        // Pad with leading zeros to ensure a fixed width of 4 characters
-        while (hexValue.length() < 4) {
-            hexValue = "0" + hexValue;
+    /**
+     * Convertir un entier en hexadécimal sur 4 caractères
+     */
+    private static String decimalEnHex(int valeur) {
+        String hex = Integer.toHexString(valeur).toUpperCase();
+        while (hex.length() < 4) {
+            hex = "0" + hex;
         }
-
-        return hexValue;
+        return hex;
     }
-	public static String obtenirAdresse(int idrom) {
-		if (idrom >= 0 && idrom < model.getRowCount()) {
-            return (String) model.getValueAt(idrom, 0); // Column 0 is index 0
+
+    /**
+     * Obtenir l'adresse ROM à partir de l'indice
+     */
+    public static String obtenirAdresse(int indexROM) {
+        if (indexROM >= 0 && indexROM < modeleTableau.getRowCount()) {
+            return (String) modeleTableau.getValueAt(indexROM, 0);
         } else {
-            System.out.println("Invalid row index");
+            System.out.println("Index ROM invalide");
             return null;
         }
-	}
-	public static void ved_rom() {
-		for (int i = 5120; i < 6144; i++) {
-            String address = decimalEnHex(i); // Convert decimal to hexadecimal
-            model.addRow(new Object[]{address, "FF"});
+    }
+
+    /**
+     * Ajouter des lignes ROM supplémentaires (exemple pour 5120 à 6144)
+     */
+    public static void remplirROMSupplementaire() {
+        for (int i = 5120; i < 6144; i++) {
+            String adresse = decimalEnHex(i);
+            modeleTableau.addRow(new Object[]{adresse, "FF"});
         }
-	}
+    }
 }
