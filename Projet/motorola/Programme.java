@@ -1,12 +1,7 @@
-package motorola;
+package motorola_6809;
 
 import java.awt.Color;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
@@ -14,90 +9,108 @@ import javax.swing.text.Highlighter;
 public class Programme extends JFrame {
 
     private static final long serialVersionUID = 1L;
-    private JPanel contentPane;
-    private static JTextArea textArea;
-    private static Highlighter highlighter;
-    private static Highlighter.HighlightPainter painter;
-    protected static int h = 0;
+
+    private JPanel panneauPrincipal;
+    private static JTextArea zoneTexte;
+    private static Highlighter surligneur;
+    private static Highlighter.HighlightPainter couleurSurlignage;
+    protected static int ligneCourante = 0;
 
     public Programme() {
+        // Configuration de la fenêtre
         setTitle("Programme");
         setResizable(false);
         setAlwaysOnTop(true);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // ferme uniquement cette fenêtre
         setBounds(280, 120, 250, 300);
 
-        contentPane = new JPanel();
-        contentPane.setLayout(null);
-        setContentPane(contentPane);
-         contentPane.setBackground(Color.PINK );
-        textArea = new JTextArea();
-        textArea.setEditable(false);
-        textArea.setBounds(10, 10, 220, 250);
-        JScrollPane scrollPane = new JScrollPane(textArea);
+        // Conteneur principal
+        panneauPrincipal = new JPanel();
+        panneauPrincipal.setLayout(null);
+        panneauPrincipal.setBackground(Color.PINK);
+        setContentPane(panneauPrincipal);
+
+        // Zone de texte
+        zoneTexte = new JTextArea();
+        zoneTexte.setEditable(false);
+
+        // Scroll pane
+        JScrollPane scrollPane = new JScrollPane(zoneTexte);
         scrollPane.setBounds(10, 10, 220, 250);
-        contentPane.add(scrollPane);
-        
-        highlighter = textArea.getHighlighter();
-        painter = new DefaultHighlighter.DefaultHighlightPainter(Color.CYAN);
+        panneauPrincipal.add(scrollPane);
 
-    }
-    
-    private static void highlightLine(final int number) {
-	    SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-			    try {
-			        int start, end;
-			        if (h == 0) {
-			            start = textArea.getLineStartOffset(number);
-			            end = textArea.getLineEndOffset(number);
-			        } else {
-			            start = textArea.getLineStartOffset(number);
-			            end = textArea.getLineEndOffset(number);
-			            highlighter.removeAllHighlights();
-			        }
-			        textArea.setSelectionStart(start);
-			        textArea.setSelectionEnd(end);
-			        highlighter.addHighlight(start, end, painter);
-			    } catch (BadLocationException e) {
-			        e.printStackTrace();
-			    }
-			}
-		});
-	}
-
-    public static void afficher_Instructions(int idrom, String instru_pc) {
-        // Append the instruction and its idrom to the text area
-    	String id = ROM.obtenirAdresse(idrom);
-        textArea.append(" " + id + "	" + instru_pc + "\n");
-        highlightLine(h);
-        h++;
+        // Surlignage
+        surligneur = zoneTexte.getHighlighter();
+        couleurSurlignage = new DefaultHighlighter.DefaultHighlightPainter(Color.CYAN);
     }
 
-	public static void clearTextArea() {
-		clearTextArea();
-	}
+    /**
+     * Surligne la ligne spécifiée dans la zone de texte
+     */
+    private static void surlignerLigne(final int numeroLigne) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                int debut = zoneTexte.getLineStartOffset(numeroLigne);
+                int fin = zoneTexte.getLineEndOffset(numeroLigne);
 
-	public static void  supprimer_Lignes(int numberOfLines) {
-        String text = textArea.getText();
-        String[] lines = text.split("\n");
+                // Supprimer les surlignages précédents
+                surligneur.removeAllHighlights();
 
-        // Ensure the requested number of lines to delete is within the range
-        numberOfLines = Math.min(numberOfLines, lines.length);
+                // Surligner la ligne
+                zoneTexte.setSelectionStart(debut);
+                zoneTexte.setSelectionEnd(fin);
+                surligneur.addHighlight(debut, fin, couleurSurlignage);
 
-        // Remove the specified number of lines
-        StringBuilder newText = new StringBuilder();
-        for (int i = numberOfLines; i < lines.length; i++) {
-            newText.append(lines[i]).append("\n");
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    /**
+     * Affiche une instruction avec l'adresse ROM
+     */
+    public static void afficher_Instructions(int idRom, String instruction) {
+        String adresse = ROM.obtenirAdresse(idRom);
+        zoneTexte.append(" " + adresse + "    " + instruction + "\n");
+        surlignerLigne(ligneCourante);
+        ligneCourante++;
+    }
+
+    /**
+     * Affiche une instruction sans adresse
+     */
+    public static void afficher_Instructions(String instruction) {
+        zoneTexte.append("        " + instruction + "\n");
+        surlignerLigne(ligneCourante);
+        ligneCourante++;
+    }
+
+    /**
+     * Vide la zone de texte
+     */
+    public static void viderZoneTexte() {
+        zoneTexte.setText("");
+        ligneCourante = 0;
+    }
+
+    /**
+     * Supprime les premières lignes de la zone de texte
+     */
+    public static void supprimer_Lignes(int nombreDeLignes) {
+        String texte = zoneTexte.getText();
+        String[] lignes = texte.split("\n");
+
+        // Limiter le nombre de lignes à supprimer
+        nombreDeLignes = Math.min(nombreDeLignes, lignes.length);
+
+        // Construire le nouveau texte
+        StringBuilder nouveauTexte = new StringBuilder();
+        for (int i = nombreDeLignes; i < lignes.length; i++) {
+            nouveauTexte.append(lignes[i]).append("\n");
         }
 
-        textArea.setText(newText.toString().trim());
+        zoneTexte.setText(nouveauTexte.toString().trim());
+        ligneCourante = Math.max(0, ligneCourante - nombreDeLignes);
     }
-
-	public static void afficher_Instructions(String instru_pc) {
-        textArea.append(" " + "    " + "	" + instru_pc + "\n");
-        highlightLine(h);
-        h++;
-	}
 }
-
